@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Proyectos del Docente</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Agregar event listeners a todos los botones de ver detalles
+            document.querySelectorAll('.ver-detalles').forEach(button => {
+                button.addEventListener('click', function() {
+                    abrirModal(this);
+                });
+            });
+        });
+
+        function abrirModal(button) {
+            const fila = button.closest('tr');
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
+            
+            const contenido = document.createElement('div');
+            contenido.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-3xl p-6 space-y-4';
+            
+            const titulo = fila.querySelector('.font-semibold').textContent;
+            const descripcion = fila.querySelector('.line-clamp-2').textContent.trim();
+            const estado = fila.querySelector('.rounded-full').textContent.trim();
+            const area = fila.querySelector('td:nth-child(3)').textContent.trim();
+            const [fechaInicio, fechaFin] = Array.from(fila.querySelectorAll('td:nth-child(5) p')).map(p => p.textContent.replace('Inicio: ', '').replace('Fin: ', '').trim());
+            const participantes = Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim());
+            
+            contenido.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold">${titulo}</h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Descripción</h3>
+                        <p class="text-gray-600 dark:text-gray-300">${descripcion}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Estado</h3>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium ${
+                                estado.toLowerCase().includes('curso') ? 'bg-blue-100 text-blue-800' :
+                                estado.toLowerCase().includes('finalizado') ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                            }">
+                                <span class="w-2 h-2 mr-2 ${
+                                    estado.toLowerCase().includes('curso') ? 'bg-blue-500' :
+                                    estado.toLowerCase().includes('finalizado') ? 'bg-green-500' :
+                                    'bg-gray-500'
+                                } rounded-full"></span>
+                                ${estado}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Área</h3>
+                            <p class="text-gray-600 dark:text-gray-300">${area}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Fecha de Inicio</h3>
+                            <p class="text-gray-600 dark:text-gray-300">${fechaInicio}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Fecha de Finalización</h3>
+                            <p class="text-gray-600 dark:text-gray-300">${fechaFin}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Participantes</h3>
+                        <div class="space-y-2">
+                            ${participantes.map(participante => `
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-blue-500">person</span>
+                                    </div>
+                                    <span class="text-gray-600 dark:text-gray-300">${participante}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button onclick="this.closest('.fixed').remove()"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                        Cerrar
+                    </button>
+                    <button onclick="window.location.href='editar-proyecto.html?id=${encodeURIComponent(titulo)}'"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500">
+                        Editar Proyecto
+                    </button>
+                </div>
+            `;
+            
+            modal.appendChild(contenido);
+            document.body.appendChild(modal);
+            
+            // Añadir efecto de entrada
+            requestAnimationFrame(() => {
+                contenido.style.transform = 'scale(1)';
+                contenido.style.opacity = '1';
+            });
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Asegurarnos de que el modal existe antes de intentar acceder a él
+            if (!document.getElementById('modal-detalles')) {
+                console.error('El modal no está presente en el DOM');
+                return;
+            }
+
+            window.verDetallesDirecto = function(button) {
+                console.log('Botón clickeado');
+                const fila = button.closest('tr');
+                const proyecto = {
+                    titulo: fila.querySelector('.font-semibold').textContent,
+                    descripcion: fila.querySelector('.line-clamp-2').textContent.trim(),
+                    estado: fila.querySelector('.rounded-full').textContent.trim(),
+                    area: fila.querySelector('td:nth-child(3)').textContent.trim(),
+                    fechaInicio: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[0].replace('Inicio: ', '').trim(),
+                    fechaFin: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[1].replace('Fin: ', '').trim(),
+                    participantes: Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim())
+                };
+                
+                const modal = document.getElementById('modal-detalles');
+                const modalContent = modal.querySelector('.transform');
+            
+            // Configurar el contenido del modal
+            document.getElementById('modal-titulo').textContent = proyecto.titulo;
+            document.getElementById('modal-descripcion').textContent = proyecto.descripcion;
+            
+            // Configurar el estado con el color correcto
+            const estadoDiv = document.getElementById('modal-estado');
+            let estadoHTML = '';
+            if (proyecto.estado.toLowerCase().includes('curso')) {
+                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>${proyecto.estado}</span>`;
+            } else if (proyecto.estado.toLowerCase().includes('finalizado')) {
+                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>${proyecto.estado}</span>`;
+            } else if (proyecto.estado.toLowerCase().includes('archivado')) {
+                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                    <span class="w-2 h-2 mr-2 bg-gray-400 rounded-full"></span>${proyecto.estado}</span>`;
+            }
+            estadoDiv.innerHTML = estadoHTML;
+
+            // Configurar el área y las fechas
+            document.getElementById('modal-area').textContent = proyecto.area;
+            document.getElementById('modal-fecha-inicio').textContent = proyecto.fechaInicio;
+            document.getElementById('modal-fecha-fin').textContent = proyecto.fechaFin;
+
+            // Mostrar participantes
+            const participantesDiv = document.getElementById('modal-participantes');
+            participantesDiv.innerHTML = proyecto.participantes.map(participante => 
+                `<div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-500">person</span>
+                    </div>
+                    <span class="text-[var(--text-light)]">${participante}</span>
+                </div>`
+            ).join('');
+
+            // Mostrar el modal con animación
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modal-detalles');
+            const modalContent = modal.querySelector('.transform');
+            
+            modal.classList.remove('opacity-100');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+        });
+    </script>
+    <style type="text/tailwindcss">
+        :root {
+--primary: #3B82F6;
+--background-light: #F1F5F9;
+--background-dark: #0F172A;
+ --card-light: #FFFFFF;
+ --card-dark: #1E293B;
+--text-light: #0F172A;
+--text-dark: #E2E8F0;
+ --text-secondary-light: #64748B;
+ --text-secondary-dark: #94A3B8;
+ --border-light: #E2E8F0;
+ --border-dark: #334155;
+ }
+ .dark {
+ --background-light: var(--background-dark);
+ --card-light: var(--card-dark);
+--text-light: var(--text-dark);
+ --text-secondary-light: var(--text-secondary-dark);
+ --border-light: var(--border-dark);
+ }
+ body {
+ font-family: 'Inter', sans-serif;
+ }
+ .group .group-focus\:block {
+ display: none;
+ }
+ .group:focus-within .group-focus\:block {
+ display: block;
+ }
+        /* Estilo para el ícono de Archivar/Caja con flecha hacia abajo */
+        .icon-archive-box {
+            position: relative;
+            display: inline-block;
+            width: 1em; /* Ajuste para que se vea bien */
+            height: 1em;
+            vertical-align: middle;
+            font-size: 1.25rem; /* Ajuste el tamaño del icono */
+        }
+        .icon-archive-box::before {
+            content: "";
+            position: absolute;
+            /* Dibujo de la caja (similar a un outline de cuadrado) */
+            top: 0.1em;
+            left: 0.1em;
+            width: 0.8em;
+            height: 0.8em;
+            border: 2px solid currentColor;
+            border-radius: 0.1em;
+            border-top: 0.3em solid transparent; /* Simula la apertura */
+        }
+        .icon-archive-box::after {
+            content: "↓"; /* Flecha hacia abajo */
+            position: absolute;
+            top: 0.35em;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            line-height: 1;
+        }
+
+ </style>
+</head>
+
+<body class="bg-[var(--background-light)] text-[var(--text-light)] text-base">
+    <div class="p-4 sm:p-6 lg:p-8">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold">Panel de Proyectos</h1>
+                <p class="text-[var(--text-secondary-light)] mt-1 text-lg">Gestiona y supervisa todos tus proyectos en
+                    un solo lugar.</p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 sm:mt-0">
+                <a href="nuevo-proyecto.html"
+                    class="bg-[var(--primary)] text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-transform hover:scale-105">
+                    <span class="material-symbols-outlined">add</span>
+                    Nuevo Proyecto
+                </a>
+                <a class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-transform hover:scale-105"
+                    href="index.html">
+                    <span class="material-symbols-outlined">logout</span>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </header>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 bg-[var(--card-light)] rounded-xl p-6">
+                <h2 class="text-2xl font-semibold mb-4">Resumen General</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-blue-500/10 p-4 rounded-lg flex items-center gap-4">
+                        <div class="bg-blue-500 p-3 rounded-full text-white">
+                            <span class="material-symbols-outlined">work</span>
+                        </div>
+                        <div>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Proyectos Totales</p>
+                            <p class="text-2xl font-bold">125</p>
+                        </div>
+                    </div>
+                    <div class="bg-green-500/10 p-4 rounded-lg flex items-center gap-4">
+                        <div class="bg-green-500 p-3 rounded-full text-white">
+                            <span class="material-symbols-outlined">play_arrow</span>
+                        </div>
+                        <div>
+                            <p class="text-[var(--text-secondary-light)] text-sm">En Curso</p>
+                            <p class="text-2xl font-bold">78</p>
+                        </div>
+                    </div>
+                    <div class="bg-purple-500/10 p-4 rounded-lg flex items-center gap-4">
+                        <div class="bg-purple-500 p-3 rounded-full text-white">
+                            <span class="material-symbols-outlined">task_alt</span>
+                        </div>
+                        <div>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Finalizados</p>
+                            <p class="text-2xl font-bold">40</p>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-500/10 p-4 rounded-lg flex items-center gap-4">
+                        <div class="bg-yellow-500 p-3 rounded-full text-white">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                        </div>
+                        <div>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Próximos Venc.</p>
+                            <p class="text-2xl font-bold">7</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-[var(--card-light)] p-4 rounded-xl border border-[var(--border-light)]">
+                        <h3 class="text-lg font-semibold mb-3">Proyectos por Estado</h3>
+                        <div class="flex flex-col gap-2 text-sm">
+                            <div class="flex items-center justify-between">
+                                <span>En Curso</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-24 h-2 bg-blue-500 rounded-full"></div>
+                                    <span class="font-medium">62%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Finalizados</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-20 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="font-medium">32%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Archivados</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-2 bg-gray-400 rounded-full"></div>
+                                    <span class="font-medium">6%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-[var(--card-light)] p-4 rounded-xl border border-[var(--border-light)]">
+                        <h3 class="text-lg font-semibold mb-3">Vencimientos Próximos (30 días)</h3>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium">Investigación IA</p>
+                                    <p class="text-[var(--text-secondary-light)] text-xs">Vence el 15/12/2023</p>
+                                </div>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">En
+                                    Curso</span>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium">Identidad Visual Startup</p>
+                                    <p class="text-[var(--text-secondary-light)] text-xs">Vence el 28/02/2024</p>
+                                </div>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">En
+                                    Curso</span>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium">Plataforma E-learning</p>
+                                    <p class="text-[var(--text-secondary-light)] text-xs">Vence el 10/01/2024</p>
+                                </div>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">En
+                                    Curso</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-[var(--card-light)] rounded-xl p-6">
+                <h2 class="text-2xl font-semibold mb-4">Actividad Reciente</h2>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 flex-shrink-0 bg-blue-500/20 text-blue-700 dark:text-blue-300 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-base">edit_note</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Proyecto "Investigación IA" actualizado.</p>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Hace 15 minutos</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 flex-shrink-0 bg-green-500/20 text-green-700 dark:text-green-300 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-base">add_task</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Nuevo proyecto "Plataforma E-learning" creado.</p>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Hace 1 hora</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div
+                            class="w-8 h-8 flex-shrink-0 bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-base">archive</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Proyecto "Optimización Energética" archivado.</p>
+                            <p class="text-[var(--text-secondary-light)] text-sm">Hace 1 día</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="mb-6 p-4 bg-[var(--card-light)] rounded-xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block font-medium text-[var(--text-secondary-light)] mb-1" for="search-name">Buscar
+                        Proyecto</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--text-secondary-light)]">search</span>
+                        <input
+                            class="w-full pl-10 pr-4 py-2 border border-[var(--border-light)] rounded-md bg-[var(--card-light)] focus:ring-[var(--primary)] focus:border-[var(--primary)] text-base"
+                            id="search-name" placeholder="Escribe un nombre..." type="text" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-[var(--text-secondary-light)] mb-1"
+                        for="filter-student">Filtrar por Estudiante</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--text-secondary-light)]">school</span>
+                        <input
+                            class="w-full pl-10 pr-4 py-2 border border-[var(--border-light)] rounded-md bg-[var(--card-light)] focus:ring-[var(--primary)] focus:border-[var(--primary)] text-base"
+                            id="filter-student" placeholder="Nombre del estudiante..." type="text" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-[var(--text-secondary-light)] mb-1"
+                        for="filter-status">Estado</label>
+                    <select
+                        class="w-full py-2 px-3 border border-[var(--border-light)] rounded-md bg-[var(--card-light)] focus:ring-[var(--primary)] focus:border-[var(--primary)] text-base"
+                        id="filter-status">
+                        <option>Todos los estados</option>
+                        <option>En curso</option>
+                        <option>Finalizado</option>
+                        <option>Archivado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-[var(--text-secondary-light)] mb-1"
+                        for="filter-area">Área</label>
+                    <select
+                        class="w-full py-2 px-3 border border-[var(--border-light)] rounded-md bg-[var(--card-light)] focus:ring-[var(--primary)] focus:border-[var(--primary)] text-base"
+                        id="filter-area">
+                        <option>Todas las áreas</option>
+                        <option>Investigación</option>
+                        <option>Desarrollo</option>
+                        <option>Innovación</option>
+                        <option>Diseño</option>
+                        <option>Marketing</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="overflow-x-auto bg-[var(--card-light)] rounded-xl">
+            <table class="w-full text-left">
+                <thead class="border-b border-[var(--border-light)]">
+                    <tr>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base">Proyecto</th>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base">Estudiantes</th>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base">Área</th>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base">Estado</th>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base">Fechas</th>
+                        <th class="p-4 font-semibold text-[var(--text-secondary-light)] text-base text-center">Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-[var(--border-light)]">
+                        <td class="p-4 align-top">
+                            <div>
+                                <p class="font-semibold text-lg">Investigación IA</p>
+                                <p class="text-[var(--text-secondary-light)] line-clamp-2 text-base">Nuevas
+                                    metodologías en inteligencia artificial.</p>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex flex-col space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block px-2 py-1 text-xs bg-[var(--primary)]/10 text-[var(--primary)] rounded-full">Líder</span>
+                                    <span class="text-sm font-medium">Juan Pérez</span>
+                                </div>
+                                <span class="text-sm text-[var(--text-secondary-light)]">+3 estudiantes</span>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top font-medium text-base">Investigación</td>
+                        <td class="p-4 align-top">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>
+                                En curso
+                            </span>
+                        </td>
+                        <td class="p-4 align-top text-[var(--text-secondary-light)] text-base">
+                            <p>Inicio: 15/01/2023</p>
+                            <p>Fin: 15/12/2023</p>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex items-center justify-center gap-2">
+                                <button title="Editar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                </button>
+                                <button title="Archivar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
+                                    <span class="icon-archive-box"></span>
+                                </button>
+                                <button class="ver-detalles p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors"
+                                    title="Ver Detalles del Proyecto">
+                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-[var(--border-light)]">
+                        <td class="p-4 align-top">
+                            <div>
+                                <p class="font-semibold text-lg">App Gestión Tareas</p>
+                                <p class="text-[var(--text-secondary-light)] line-clamp-2 text-base">App móvil para
+                                    colaboración en tiempo real.</p>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex flex-col space-y-1">
+                                <span class="text-sm font-medium">Ana Rodríguez</span>
+                                <span class="text-sm font-medium">Carlos López</span>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top font-medium text-base">Desarrollo</td>
+                        <td class="p-4 align-top">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>
+                                Finalizado
+                            </span>
+                        </td>
+                        <td class="p-4 align-top text-[var(--text-secondary-light)] text-base">
+                            <p>Inicio: 01/02/2023</p>
+                            <p>Fin: 30/06/2023</p>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex items-center justify-center gap-2">
+                                <button title="Editar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                </button>
+                                <button title="Archivar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
+                                    <span class="icon-archive-box"></span>
+                                </button>
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-[var(--border-light)]">
+                        <td class="p-4 align-top">
+                            <div>
+                                <p class="font-semibold text-lg">Optimización Energética</p>
+                                <p class="text-[var(--text-secondary-light)] line-clamp-2 text-base">Sistema para
+                                    optimizar consumo en edificios.</p>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex flex-col space-y-1">
+                                <span class="text-sm font-medium">Laura Martínez</span>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top font-medium text-base">Innovación</td>
+                        <td class="p-4 align-top">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                <span class="w-2 h-2 mr-2 bg-gray-400 rounded-full"></span>
+                                Archivado
+                            </span>
+                        </td>
+                        <td class="p-4 align-top text-[var(--text-secondary-light)] text-base">
+                            <p>Inicio: 10/03/2022</p>
+                            <p>Fin: 15/12/2022</p>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex items-center justify-center gap-2">
+                                <button title="Editar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                </button>
+                                <button title="Archivar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
+                                    <span class="icon-archive-box"></span>
+                                </button>
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 align-top">
+                            <div>
+                                <p class="font-semibold text-lg">Identidad Visual Startup</p>
+                                <p class="text-[var(--text-secondary-light)] line-clamp-2 text-base">Creación de
+                                    identidad visual completa.</p>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex flex-col space-y-1">
+                                <span class="text-sm font-medium">Pablo Sánchez</span>
+                                <span class="text-sm font-medium">Isabel Torres</span>
+                                <span class="text-sm font-medium">Diego Ramírez</span>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top font-medium text-base">Diseño</td>
+                        <td class="p-4 align-top">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>
+                                En curso
+                            </span>
+                        </td>
+                        <td class="p-4 align-top text-[var(--text-secondary-light)] text-base">
+                            <p>Inicio: 01/08/2023</p>
+                            <p>Fin: 28/02/2024</p>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex items-center justify-center gap-2">
+                                <button title="Editar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                </button>
+                                <button title="Archivar Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
+                                    <span class="icon-archive-box"></span>
+                                </button>
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
+                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- El modal ahora se crea dinámicamente en JavaScript -->
+
+    <script>
+        // Función para mostrar el modal
+        function verDetalles(button) {
+            const fila = button.closest('tr');
+            const proyecto = {
+                titulo: fila.querySelector('.font-semibold').textContent,
+                descripcion: fila.querySelector('.line-clamp-2').textContent.trim(),
+                estado: fila.querySelector('.rounded-full').textContent.trim(),
+                area: fila.querySelector('td:nth-child(3)').textContent.trim(),
+                fechaInicio: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[0].replace('Inicio: ', '').trim(),
+                fechaFin: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[1].replace('Fin: ', '').trim(),
+                participantes: Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim())
+            };
+            abrirModal(proyecto);
+        }
+
+        // Esperar a que el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar los botones de "Ver Detalles"
+            document.querySelectorAll('button[title="Ver Detalles del Proyecto"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fila = this.closest('tr');
+                    const proyecto = {
+                        titulo: fila.querySelector('.font-semibold').textContent,
+                        descripcion: fila.querySelector('.line-clamp-2').textContent.trim(),
+                        estado: fila.querySelector('.rounded-full').textContent.trim(),
+                        area: fila.querySelector('td:nth-child(3)').textContent.trim(),
+                        fechaInicio: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[0].replace('Inicio: ', '').trim(),
+                        fechaFin: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[1].replace('Fin: ', '').trim(),
+                        participantes: Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim())
+                    };
+                    abrirModal(proyecto);
+                });
+            });
+
+            // Configurar eventos para cerrar el modal
+            document.getElementById('modal-overlay').addEventListener('click', cerrarModal);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !document.getElementById('modal-detalles').classList.contains('hidden')) {
+                    cerrarModal();
+                }
+            });
+        });
+
+        // Función para abrir el modal con los detalles del proyecto
+        function abrirModal(button) {
+            const fila = button.closest('tr');
+            const proyecto = {
+                titulo: fila.querySelector('.font-semibold').textContent,
+                descripcion: fila.querySelector('.line-clamp-2').textContent.trim(),
+                estado: fila.querySelector('.rounded-full').textContent.trim(),
+                area: fila.querySelector('td:nth-child(3)').textContent.trim(),
+                inversion: (Math.random() * 50000 + 10000).toFixed(2), // Simulación de datos de inversión
+                ultimaActualizacion: new Date().toLocaleString() // Fecha actual como última actualización
+            };
+
+            // Extraer fechas correctamente
+            let fechas = Array.from(fila.querySelectorAll('td:nth-child(5) p')).map(p => p.textContent.trim());
+            let fechaInicio = fechas[0]?.replace('Inicio:', '').trim() || '';
+            let fechaFin = fechas[1]?.replace('Fin:', '').trim() || '';
+
+            // Extraer todos los participantes sin filtrar
+            const participantes = Array.from(fila.querySelectorAll('td:nth-child(2) span'))
+                .map(span => span.textContent.trim());
+
+            // Crear el modal dinámicamente
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+            
+            // Color del estado
+            let estadoColor = proyecto.estado.toLowerCase().includes('curso') ? 'blue' :
+                            proyecto.estado.toLowerCase().includes('finalizado') ? 'green' : 'gray';
+
+            modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50';
+            modal.style.paddingTop = '2rem';
+            modal.style.paddingBottom = '2rem';
+            modal.style.overflowY = 'auto';
+            modal.innerHTML = `
+                <div class="min-h-full flex items-center justify-center p-4">
+                    <div class="bg-[var(--card-light)] rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all duration-300 scale-100 opacity-100 overflow-hidden">
+                        <!-- Encabezado con gradiente y diseño mejorado -->
+                        <div class="relative bg-gradient-to-r from-[var(--primary)] to-[var(--primary)]/80 p-8">
+                            <h2 class="text-3xl font-bold text-white">${proyecto.titulo}</h2>
+                            <button class="absolute top-4 right-4 text-white/90 hover:text-white transition-colors" 
+                                    onclick="this.closest('.fixed').remove()">
+                                <span class="material-symbols-outlined text-3xl">close</span>
+                            </button>
+                        </div>
+
+                    <div class="p-8 space-y-8">
+                        <!-- Descripción en su propia sección -->
+                        <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-[var(--primary)] text-2xl">description</span>
+                                <h3 class="text-lg font-semibold text-[var(--text-light)]">Descripción del Proyecto</h3>
+                            </div>
+                            <p class="text-[var(--text-light)] text-xl leading-relaxed">${proyecto.descripcion}</p>
+                        </div>
+
+                        <!-- Estado y Área con diseño de tarjeta -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">radio_button_checked</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Estado</h3>
+                                </div>
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-base font-medium bg-${estadoColor}-100 text-${estadoColor}-800 dark:bg-${estadoColor}-900 dark:text-${estadoColor}-200 shadow-sm">
+                                    <span class="w-2 h-2 mr-2 bg-${estadoColor}-500 rounded-full"></span>
+                                    ${proyecto.estado}
+                                </span>
+                            </div>
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">category</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Área</h3>
+                                </div>
+                                <p class="text-[var(--text-light)] text-lg">${proyecto.area}</p>
+                            </div>
+                        </div>
+
+                        <!-- Inversión y Última Actualización -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">payments</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Inversión</h3>
+                                </div>
+                                <p class="text-2xl font-bold text-[var(--text-light)]">$${proyecto.inversion || '0'}</p>
+                            </div>
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">update</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Última Actualización</h3>
+                                </div>
+                                <p class="text-[var(--text-secondary-light)]">${new Date().toLocaleString()}</p>
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">calendar_today</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Fecha de Inicio</h3>
+                                </div>
+                                <p class="text-[var(--text-light)] text-lg">${fechaInicio}</p>
+                            </div>
+                            <div class="bg-[var(--primary)]/5 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-2xl">event_available</span>
+                                    <h3 class="text-lg font-semibold text-[var(--text-light)]">Fecha de Finalización</h3>
+                                </div>
+                                <p class="text-[var(--text-light)] text-lg">${fechaFin}</p>
+                            </div>
+                        </div>
+
+                        <!-- Participantes con diseño mejorado -->
+                        <div class="bg-[var(--primary)]/5 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="material-symbols-outlined text-[var(--primary)] text-2xl">group</span>
+                                <h3 class="text-lg font-semibold text-[var(--text-light)]">Participantes</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <!-- Líder del proyecto -->
+                                <div class="flex items-center gap-4 p-4 rounded-lg bg-[var(--primary)]/10 transition-transform hover:scale-[1.02]">
+                                    <div class="w-12 h-12 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[var(--primary)] text-3xl">person_pin</span>
+                                    </div>
+                                    <div>
+                                        <span class="inline-block px-2 py-1 text-xs bg-[var(--primary)]/20 text-[var(--primary)] rounded-full mb-1">Líder del Proyecto</span>
+                                        <p class="text-[var(--text-light)] font-medium text-lg">${participantes[0]}</p>
+                                    </div>
+                                </div>
+                                <!-- Resto de participantes -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    ${participantes.slice(1).map(participante => `
+                                        <div class="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 transition-transform hover:scale-[1.02]">
+                                            <div class="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-[var(--primary)] text-2xl">person</span>
+                                            </div>
+                                            <span class="text-[var(--text-light)] font-medium">${participante}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pie del modal con efecto de cristal -->
+                    <div class="flex items-center justify-end gap-4 p-6 border-t border-[var(--border-light)] backdrop-blur-sm bg-[var(--card-light)]/80">
+                        <button class="px-6 py-3 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors font-medium" 
+                                onclick="this.closest('.fixed').remove()">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Agregar el modal al body
+            document.body.appendChild(modal);
+
+            // Configurar el cierre del modal
+            const closeButton = modal.querySelector('button');
+            closeButton.onclick = () => modal.remove();
+
+            // Cerrar al hacer clic fuera del modal
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            // Cerrar con la tecla Escape
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        // Función para cerrar el modal
+        function cerrarModal() {
+            const modal = document.getElementById('modal-detalles');
+            const modalContent = modal.querySelector('.transform');
+            
+            // Animación de salida
+            modal.classList.remove('opacity-100');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            
+            // Ocultar el modal después de la animación
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    </script>
+
+</body>
+
+</html>

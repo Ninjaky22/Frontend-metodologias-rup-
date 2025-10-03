@@ -8,253 +8,37 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Agregar event listeners a todos los botones de ver detalles
-            document.querySelectorAll('.ver-detalles').forEach(button => {
-                button.addEventListener('click', function() {
-                    abrirModal(this);
-                });
-            });
-        });
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="js/proyectoModal.js" defer></script>
 
-        function abrirModal(button) {
-            const fila = button.closest('tr');
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm';
-            
-            const contenido = document.createElement('div');
-            contenido.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-3xl p-6 space-y-4';
-            
-            const titulo = fila.querySelector('.font-semibold').textContent;
-            const descripcion = fila.querySelector('.line-clamp-2').textContent.trim();
-            const estado = fila.querySelector('.rounded-full').textContent.trim();
-            const area = fila.querySelector('td:nth-child(3)').textContent.trim();
-            const [fechaInicio, fechaFin] = Array.from(fila.querySelectorAll('td:nth-child(5) p')).map(p => p.textContent.replace('Inicio: ', '').replace('Fin: ', '').trim());
-            const participantes = Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim());
-            
-            contenido.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-semibold">${titulo}</h2>
-                    <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <h3 class="text-lg font-medium mb-2">Descripción</h3>
-                        <p class="text-gray-600 dark:text-gray-300">${descripcion}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Estado</h3>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium ${
-                                estado.toLowerCase().includes('curso') ? 'bg-blue-100 text-blue-800' :
-                                estado.toLowerCase().includes('finalizado') ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
-                            }">
-                                <span class="w-2 h-2 mr-2 ${
-                                    estado.toLowerCase().includes('curso') ? 'bg-blue-500' :
-                                    estado.toLowerCase().includes('finalizado') ? 'bg-green-500' :
-                                    'bg-gray-500'
-                                } rounded-full"></span>
-                                ${estado}
-                            </span>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Área</h3>
-                            <p class="text-gray-600 dark:text-gray-300">${area}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Fecha de Inicio</h3>
-                            <p class="text-gray-600 dark:text-gray-300">${fechaInicio}</p>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium mb-2">Fecha de Finalización</h3>
-                            <p class="text-gray-600 dark:text-gray-300">${fechaFin}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-medium mb-2">Participantes</h3>
-                        <div class="space-y-2">
-                            ${participantes.map(participante => `
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-blue-500">person</span>
-                                    </div>
-                                    <span class="text-gray-600 dark:text-gray-300">${participante}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-4 mt-6">
-                    <button onclick="this.closest('.fixed').remove()"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                        Cerrar
-                    </button>
-                    <button onclick="window.location.href='editar-proyecto.html?id=${encodeURIComponent(titulo)}'"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500">
-                        Editar Proyecto
-                    </button>
-                </div>
-            `;
-            
-            modal.appendChild(contenido);
-            document.body.appendChild(modal);
-            
-            // Añadir efecto de entrada
-            requestAnimationFrame(() => {
-                contenido.style.transform = 'scale(1)';
-                contenido.style.opacity = '1';
-            });
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary)',
+                    }
+                }
+            }
         }
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Asegurarnos de que el modal existe antes de intentar acceder a él
-            if (!document.getElementById('modal-detalles')) {
-                console.error('El modal no está presente en el DOM');
-                return;
-            }
-
-            window.verDetallesDirecto = function(button) {
-                console.log('Botón clickeado');
-                const fila = button.closest('tr');
-                const proyecto = {
-                    titulo: fila.querySelector('.font-semibold').textContent,
-                    descripcion: fila.querySelector('.line-clamp-2').textContent.trim(),
-                    estado: fila.querySelector('.rounded-full').textContent.trim(),
-                    area: fila.querySelector('td:nth-child(3)').textContent.trim(),
-                    fechaInicio: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[0].replace('Inicio: ', '').trim(),
-                    fechaFin: fila.querySelector('td:nth-child(5)').textContent.split('\\n')[1].replace('Fin: ', '').trim(),
-                    participantes: Array.from(fila.querySelectorAll('td:nth-child(2) span')).map(span => span.textContent.trim())
-                };
-                
-                const modal = document.getElementById('modal-detalles');
-                const modalContent = modal.querySelector('.transform');
-            
-            // Configurar el contenido del modal
-            document.getElementById('modal-titulo').textContent = proyecto.titulo;
-            document.getElementById('modal-descripcion').textContent = proyecto.descripcion;
-            
-            // Configurar el estado con el color correcto
-            const estadoDiv = document.getElementById('modal-estado');
-            let estadoHTML = '';
-            if (proyecto.estado.toLowerCase().includes('curso')) {
-                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    <span class="w-2 h-2 mr-2 bg-blue-500 rounded-full"></span>${proyecto.estado}</span>`;
-            } else if (proyecto.estado.toLowerCase().includes('finalizado')) {
-                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span>${proyecto.estado}</span>`;
-            } else if (proyecto.estado.toLowerCase().includes('archivado')) {
-                estadoHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-base font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                    <span class="w-2 h-2 mr-2 bg-gray-400 rounded-full"></span>${proyecto.estado}</span>`;
-            }
-            estadoDiv.innerHTML = estadoHTML;
-
-            // Configurar el área y las fechas
-            document.getElementById('modal-area').textContent = proyecto.area;
-            document.getElementById('modal-fecha-inicio').textContent = proyecto.fechaInicio;
-            document.getElementById('modal-fecha-fin').textContent = proyecto.fechaFin;
-
-            // Mostrar participantes
-            const participantesDiv = document.getElementById('modal-participantes');
-            participantesDiv.innerHTML = proyecto.participantes.map(participante => 
-                `<div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-blue-500">person</span>
-                    </div>
-                    <span class="text-[var(--text-light)]">${participante}</span>
-                </div>`
-            ).join('');
-
-            // Mostrar el modal con animación
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.add('opacity-100');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        function cerrarModal() {
-            const modal = document.getElementById('modal-detalles');
-            const modalContent = modal.querySelector('.transform');
-            
-            modal.classList.remove('opacity-100');
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
+        // El código del modal se ha movido al archivo proyectoModal.js
+        document.addEventListener('DOMContentLoaded', () => {
+            ProyectoModal.init();
         });
     </script>
     <style type="text/tailwindcss">
-        :root {
---primary: #3B82F6;
---background-light: #F1F5F9;
---background-dark: #0F172A;
- --card-light: #FFFFFF;
- --card-dark: #1E293B;
---text-light: #0F172A;
---text-dark: #E2E8F0;
- --text-secondary-light: #64748B;
- --text-secondary-dark: #94A3B8;
- --border-light: #E2E8F0;
- --border-dark: #334155;
- }
- .dark {
- --background-light: var(--background-dark);
- --card-light: var(--card-dark);
---text-light: var(--text-dark);
- --text-secondary-light: var(--text-secondary-dark);
- --border-light: var(--border-dark);
- }
- body {
- font-family: 'Inter', sans-serif;
- }
- .group .group-focus\:block {
- display: none;
- }
- .group:focus-within .group-focus\:block {
- display: block;
- }
-        /* Estilo para el ícono de Archivar/Caja con flecha hacia abajo */
-        .icon-archive-box {
-            position: relative;
-            display: inline-block;
-            width: 1em; /* Ajuste para que se vea bien */
-            height: 1em;
-            vertical-align: middle;
-            font-size: 1.25rem; /* Ajuste el tamaño del icono */
+        @layer utilities {
+            .group-focus\:block {
+                display: none;
+            }
+            .group:focus-within .group-focus\:block {
+                display: block;
+            }
         }
-        .icon-archive-box::before {
-            content: "";
-            position: absolute;
-            /* Dibujo de la caja (similar a un outline de cuadrado) */
-            top: 0.1em;
-            left: 0.1em;
-            width: 0.8em;
-            height: 0.8em;
-            border: 2px solid currentColor;
-            border-radius: 0.1em;
-            border-top: 0.3em solid transparent; /* Simula la apertura */
-        }
-        .icon-archive-box::after {
-            content: "↓"; /* Flecha hacia abajo */
-            position: absolute;
-            top: 0.35em;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.8em;
-            line-height: 1;
-        }
-
- </style>
+    </style>
 </head>
 
 <body class="bg-[var(--background-light)] text-[var(--text-light)] text-base">
@@ -492,11 +276,10 @@
                         </td>
                         <td class="p-4 align-top">
                             <div class="flex flex-col space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block px-2 py-1 text-xs bg-[var(--primary)]/10 text-[var(--primary)] rounded-full">Líder</span>
-                                    <span class="text-sm font-medium">Juan Pérez</span>
-                                </div>
-                                <span class="text-sm text-[var(--text-secondary-light)]">+3 estudiantes</span>
+                                <span class="text-sm font-medium">Juan Pérez</span>
+                                <span class="text-sm font-medium">María González</span>
+                                <span class="text-sm font-medium">Roberto Díaz</span>
+                                <span class="text-sm font-medium">Ana Silva</span>
                             </div>
                         </td>
                         <td class="p-4 align-top font-medium text-base">Investigación</td>
@@ -513,17 +296,17 @@
                         </td>
                         <td class="p-4 align-top">
                             <div class="flex items-center justify-center gap-2">
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">visibility</span>
+                                </button>
                                 <button title="Editar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                    class="p-2 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">edit_note</span>
                                 </button>
                                 <button title="Archivar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
-                                    <span class="icon-archive-box"></span>
-                                </button>
-                                <button class="ver-detalles p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors"
-                                    title="Ver Detalles del Proyecto">
-                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                    class="p-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">inventory_2</span>
                                 </button>
                             </div>
                         </td>
@@ -556,17 +339,17 @@
                         </td>
                         <td class="p-4 align-top">
                             <div class="flex items-center justify-center gap-2">
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">visibility</span>
+                                </button>
                                 <button title="Editar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                    class="p-2 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">edit_note</span>
                                 </button>
                                 <button title="Archivar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
-                                    <span class="icon-archive-box"></span>
-                                </button>
-                                <button title="Ver Detalles del Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                    class="p-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">inventory_2</span>
                                 </button>
                             </div>
                         </td>
@@ -598,17 +381,17 @@
                         </td>
                         <td class="p-4 align-top">
                             <div class="flex items-center justify-center gap-2">
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">visibility</span>
+                                </button>
                                 <button title="Editar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                    class="p-2 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">edit_note</span>
                                 </button>
                                 <button title="Archivar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
-                                    <span class="icon-archive-box"></span>
-                                </button>
-                                <button title="Ver Detalles del Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                    class="p-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">inventory_2</span>
                                 </button>
                             </div>
                         </td>
@@ -642,17 +425,17 @@
                         </td>
                         <td class="p-4 align-top">
                             <div class="flex items-center justify-center gap-2">
+                                <button title="Ver Detalles del Proyecto"
+                                    class="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">visibility</span>
+                                </button>
                                 <button title="Editar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                    class="p-2 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">edit_note</span>
                                 </button>
                                 <button title="Archivar Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-500 transition-colors">
-                                    <span class="icon-archive-box"></span>
-                                </button>
-                                <button title="Ver Detalles del Proyecto"
-                                    class="p-2 rounded-full text-[var(--text-secondary-light)] hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--primary)] transition-colors">
-                                    <span class="material-symbols-outlined text-xl">open_in_full</span>
+                                    class="p-2 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 group">
+                                    <span class="material-symbols-outlined group-hover:scale-110 transform transition-transform">inventory_2</span>
                                 </button>
                             </div>
                         </td>
@@ -725,8 +508,8 @@
             let fechaInicio = fechas[0]?.replace('Inicio:', '').trim() || '';
             let fechaFin = fechas[1]?.replace('Fin:', '').trim() || '';
 
-            // Extraer todos los participantes sin filtrar
-            const participantes = Array.from(fila.querySelectorAll('td:nth-child(2) span'))
+            // Extraer todos los participantes
+            const participantes = Array.from(fila.querySelectorAll('td:nth-child(2) .text-sm.font-medium'))
                 .map(span => span.textContent.trim());
 
             // Crear el modal dinámicamente
@@ -826,28 +609,15 @@
                                 <span class="material-symbols-outlined text-[var(--primary)] text-2xl">group</span>
                                 <h3 class="text-lg font-semibold text-[var(--text-light)]">Participantes</h3>
                             </div>
-                            <div class="space-y-4">
-                                <!-- Líder del proyecto -->
-                                <div class="flex items-center gap-4 p-4 rounded-lg bg-[var(--primary)]/10 transition-transform hover:scale-[1.02]">
-                                    <div class="w-12 h-12 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-[var(--primary)] text-3xl">person_pin</span>
-                                    </div>
-                                    <div>
-                                        <span class="inline-block px-2 py-1 text-xs bg-[var(--primary)]/20 text-[var(--primary)] rounded-full mb-1">Líder del Proyecto</span>
-                                        <p class="text-[var(--text-light)] font-medium text-lg">${participantes[0]}</p>
-                                    </div>
-                                </div>
-                                <!-- Resto de participantes -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    ${participantes.slice(1).map(participante => `
-                                        <div class="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 transition-transform hover:scale-[1.02]">
-                                            <div class="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                                                <span class="material-symbols-outlined text-[var(--primary)] text-2xl">person</span>
-                                            </div>
-                                            <span class="text-[var(--text-light)] font-medium">${participante}</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${participantes.map(participante => `
+                                    <div class="flex items-center gap-3 p-4 rounded-lg bg-[var(--primary)]/10 transition-transform hover:scale-[1.02]">
+                                        <div class="w-10 h-10 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-[var(--primary)] text-2xl">person</span>
                                         </div>
-                                    `).join('')}
-                                </div>
+                                        <span class="text-[var(--text-light)] font-medium text-lg">${participante}</span>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     </div>
